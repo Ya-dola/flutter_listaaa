@@ -56,7 +56,7 @@ class ListScreenState extends State<ListScreen> {
       print('Error deleting item: $e');
     }
 
-    // Refresh the shopping list after deleting
+    // Refresh the shopping list after editing
     _updateList();
   }
 

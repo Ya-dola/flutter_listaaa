@@ -6,6 +6,10 @@ Shopping List App to Get to Know about Flutter with Cupertino Apps
 
 - Supabase
 
+## Screenshot
+
+<img alt="App Screenshot" src="Screenshots/app.png" title="App Screenshot" width="260"/>
+
 ## Flutter Helpers
 
 - [Material Theme Guide](https://m3.material.io/)
