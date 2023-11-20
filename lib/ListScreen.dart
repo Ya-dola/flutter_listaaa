@@ -32,7 +32,7 @@ class ListScreenState extends State<ListScreen> {
     }
   }
 
-  void _addItemToList(name, description) async {
+  void _addItemToList(String name, String description) async {
     try {
       // Example: Add a new item
       await supabaseService.addItem({
@@ -108,12 +108,9 @@ class ListScreenState extends State<ListScreen> {
             ),
             itemCount: shoppingList.length,
             itemBuilder: (context, index) {
-              final item = shoppingList[index];
-              return Card(
-                child: ListTile(
-                  title: Text(item['name']),
-                  // Other item details go here
-                ),
+              return ItemCard(
+                item: shoppingList[index],
+                supabaseService: supabaseService,
               );
             },
           ),
@@ -123,6 +120,94 @@ class ListScreenState extends State<ListScreen> {
           child: const Text('Add Item'),
         )
       ],
+    );
+  }
+}
+
+class ItemCard extends StatelessWidget {
+  final Map<String, dynamic> item;
+  final SupabaseService supabaseService;
+
+  const ItemCard(
+      {super.key, required this.item, required this.supabaseService});
+
+  void _deleteSelectedItem(int id) async {
+    try {
+      await supabaseService.deleteItem(id);
+    } catch (e) {
+      print('Error deleting item: $e');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final int id = item['id'];
+    final String name = item['name'];
+    final String? desc = item['description'];
+    final bool completed = item['completed'];
+
+    // Determine theme brightness
+    Brightness? themeBrightness = CupertinoTheme.of(context).brightness;
+
+    // Set the card color based on theme brightness
+    Color cardColor = themeBrightness == Brightness.light
+        ? const Color(0xffdfbbff) // Light theme color
+        : const Color(0xff9f73cc); // Dark theme color
+
+    return Card(
+      elevation: 3.0,
+      margin: const EdgeInsets.all(16.0),
+      color: cardColor,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
+        child: AnimatedSize(
+          duration: const Duration(milliseconds: 240),
+          curve: Curves.easeInOutCubicEmphasized,
+          child: Center(
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.edit),
+                      tooltip: 'Edit Item',
+                      onPressed: () {},
+                    ),
+                    const SizedBox(
+                      width: 20,
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.delete_forever_rounded),
+                      tooltip: 'Delete Item',
+                      onPressed: () {
+                        _deleteSelectedItem(id);
+                      },
+                    ),
+                  ],
+                ),
+                Text(
+                  name,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 26,
+                  ),
+                ),
+                const SizedBox(
+                  height: 16,
+                ),
+                Text(
+                  name,
+                  style: const TextStyle(
+                    fontStyle: FontStyle.italic,
+                    fontSize: 20,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
