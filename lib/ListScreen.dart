@@ -48,6 +48,18 @@ class ListScreenState extends State<ListScreen> {
     }
   }
 
+  void _editSelectedItem(int id, String editedName, String editedDesc) async {
+    try {
+      await supabaseService
+          .updateItem(id, {'name': editedName, 'description': editedDesc});
+    } catch (e) {
+      print('Error deleting item: $e');
+    }
+
+    // Refresh the shopping list after deleting
+    _updateList();
+  }
+
   void _deleteSelectedItem(int id) async {
     try {
       await supabaseService.deleteItem(id);
@@ -123,14 +135,18 @@ class ListScreenState extends State<ListScreen> {
               return ItemCard(
                 item: shoppingList[index],
                 supabaseService: supabaseService,
+                onEdit: _editSelectedItem,
                 onDelete: _deleteSelectedItem,
               );
             },
           ),
         ),
-        CupertinoButton(
-          onPressed: _showAddDialog,
-          child: const Text('Add Item'),
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: CupertinoButton.filled(
+            onPressed: _showAddDialog,
+            child: const Text('Add Item'),
+          ),
         )
       ],
     );
@@ -140,12 +156,14 @@ class ListScreenState extends State<ListScreen> {
 class ItemCard extends StatelessWidget {
   final Map<String, dynamic> item;
   final SupabaseService supabaseService;
+  final void Function(int, String, String) onEdit;
   final void Function(int) onDelete;
 
   const ItemCard({
     super.key,
     required this.item,
     required this.supabaseService,
+    required this.onEdit,
     required this.onDelete,
   });
 
@@ -164,12 +182,69 @@ class ItemCard extends StatelessWidget {
         ? const Color(0xffdfbbff) // Light theme color
         : const Color(0xff9f73cc); // Dark theme color
 
+    void showEditDialog(String oldName, String oldDesc) async {
+      TextEditingController nameController = TextEditingController();
+      TextEditingController descriptionController = TextEditingController();
+
+      nameController.text = oldName;
+      descriptionController.text = oldDesc;
+
+      await showCupertinoDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return CupertinoAlertDialog(
+            title: Text('Edit Item: $name'),
+            content: Column(
+              children: [
+                const SizedBox(height: 10.0),
+                const Text(
+                  'Name',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                CupertinoTextField(
+                  placeholder: 'Name',
+                  controller: nameController,
+                ),
+                const SizedBox(height: 16.0),
+                const Text(
+                  'Description',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                CupertinoTextField(
+                  placeholder: 'Description',
+                  controller: descriptionController,
+                ),
+              ],
+            ),
+            actions: [
+              CupertinoDialogAction(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                isDefaultAction: true,
+                child: const Text('Cancel'),
+              ),
+              CupertinoDialogAction(
+                onPressed: () {
+                  onEdit(id, nameController.text, descriptionController.text);
+                  Navigator.pop(context);
+                },
+                child: const Text('Edit Item'),
+              ),
+            ],
+          );
+        },
+      );
+    }
+
     return Card(
-      elevation: 3.0,
-      margin: const EdgeInsets.all(16.0),
+      elevation: 6,
+      margin: const EdgeInsets.all(12.0),
       color: cardColor,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
+        padding: const EdgeInsets.fromLTRB(8, 12, 8, 12),
         child: AnimatedSize(
           duration: const Duration(milliseconds: 240),
           curve: Curves.easeInOutCubicEmphasized,
@@ -183,11 +258,11 @@ class ItemCard extends StatelessWidget {
                       icon: const Icon(Icons.edit),
                       color: Theme.of(context).textTheme.bodyLarge?.color,
                       tooltip: 'Edit Item',
-                      onPressed: () {},
+                      onPressed: () {
+                        showEditDialog(name, desc!);
+                      },
                     ),
-                    const SizedBox(
-                      width: 30,
-                    ),
+                    const SizedBox(width: 42),
                     IconButton(
                       icon: const Icon(Icons.delete_forever_rounded),
                       tooltip: 'Delete Item',
@@ -198,6 +273,7 @@ class ItemCard extends StatelessWidget {
                     ),
                   ],
                 ),
+                const SizedBox(height: 4),
                 Text(
                   name,
                   style: const TextStyle(
@@ -205,14 +281,12 @@ class ItemCard extends StatelessWidget {
                     fontSize: 26,
                   ),
                 ),
-                const SizedBox(
-                  height: 16,
-                ),
+                const SizedBox(height: 16),
                 Text(
                   desc!,
                   style: const TextStyle(
                     fontStyle: FontStyle.italic,
-                    fontSize: 20,
+                    fontSize: 18,
                   ),
                 ),
               ],

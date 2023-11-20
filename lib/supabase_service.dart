@@ -9,7 +9,7 @@ class SupabaseService {
 
   Future<List<Map<String, dynamic>>> fetchList() async {
     final response = await http.get(
-      Uri.parse('$supabaseUrl/rest/v1/$tableName?select=*'),
+      Uri.parse('$supabaseUrl/rest/v1/$tableName?select=*&order=id.asc'),
       headers: {'apikey': supabaseKey!},
     );
 
@@ -47,10 +47,14 @@ class SupabaseService {
       Uri.parse('$supabaseUrl/rest/v1/$tableName?id=eq.$itemId'),
       headers: {
         'apikey': supabaseKey!,
+        'Authorization': 'Bearer $supabaseKey',
         'Content-Type': 'application/json',
+        'Prefer': 'return=minimal',
       },
       body: json.encode(updatedItem),
     );
+
+    // print('ID: $itemId - Code: ${response.statusCode}');
 
     if (response.statusCode != 200) {
       throw Exception('Failed to update item in the shopping list');
@@ -66,7 +70,7 @@ class SupabaseService {
       },
     );
 
-    print('ID: $itemId - Code: ${response.statusCode}');
+    // print('ID: $itemId - Code: ${response.statusCode}');
 
     if (response.statusCode != 204) {
       throw Exception('Failed to delete item from the shopping list');
