@@ -48,6 +48,17 @@ class ListScreenState extends State<ListScreen> {
     }
   }
 
+  void _deleteSelectedItem(int id) async {
+    try {
+      await supabaseService.deleteItem(id);
+    } catch (e) {
+      print('Error deleting item: $e');
+    }
+
+    // Refresh the shopping list after deleting
+    _updateList();
+  }
+
   void _showAddDialog() async {
     TextEditingController nameController = TextEditingController();
     TextEditingController descriptionController = TextEditingController();
@@ -59,6 +70,7 @@ class ListScreenState extends State<ListScreen> {
           title: const Text('Add New Item'),
           content: Column(
             children: [
+              const SizedBox(height: 10.0),
               CupertinoTextField(
                 placeholder: 'Name',
                 controller: nameController,
@@ -111,6 +123,7 @@ class ListScreenState extends State<ListScreen> {
               return ItemCard(
                 item: shoppingList[index],
                 supabaseService: supabaseService,
+                onDelete: _deleteSelectedItem,
               );
             },
           ),
@@ -127,17 +140,14 @@ class ListScreenState extends State<ListScreen> {
 class ItemCard extends StatelessWidget {
   final Map<String, dynamic> item;
   final SupabaseService supabaseService;
+  final void Function(int) onDelete;
 
-  const ItemCard(
-      {super.key, required this.item, required this.supabaseService});
-
-  void _deleteSelectedItem(int id) async {
-    try {
-      await supabaseService.deleteItem(id);
-    } catch (e) {
-      print('Error deleting item: $e');
-    }
-  }
+  const ItemCard({
+    super.key,
+    required this.item,
+    required this.supabaseService,
+    required this.onDelete,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -171,17 +181,19 @@ class ItemCard extends StatelessWidget {
                   children: [
                     IconButton(
                       icon: const Icon(Icons.edit),
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
                       tooltip: 'Edit Item',
                       onPressed: () {},
                     ),
                     const SizedBox(
-                      width: 20,
+                      width: 30,
                     ),
                     IconButton(
                       icon: const Icon(Icons.delete_forever_rounded),
                       tooltip: 'Delete Item',
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
                       onPressed: () {
-                        _deleteSelectedItem(id);
+                        onDelete(id);
                       },
                     ),
                   ],
@@ -197,7 +209,7 @@ class ItemCard extends StatelessWidget {
                   height: 16,
                 ),
                 Text(
-                  name,
+                  desc!,
                   style: const TextStyle(
                     fontStyle: FontStyle.italic,
                     fontSize: 20,

@@ -26,10 +26,16 @@ class SupabaseService {
       Uri.parse('$supabaseUrl/rest/v1/$tableName'),
       headers: {
         'apikey': supabaseKey!,
+        'Authorization': 'Bearer $supabaseKey',
         'Content-Type': 'application/json',
+        'Prefer': 'return=minimal',
       },
       body: json.encode(item),
     );
+
+    // print('URL: $supabaseUrl - key: $supabaseKey - table: $tableName');
+    // print(json.encode(item));
+    // print('Code: ${response.statusCode}');
 
     if (response.statusCode != 201) {
       throw Exception('Failed to add item to the shopping list');
@@ -54,10 +60,15 @@ class SupabaseService {
   Future<void> deleteItem(int itemId) async {
     final response = await http.delete(
       Uri.parse('$supabaseUrl/rest/v1/$tableName?id=eq.$itemId'),
-      headers: {'apikey': supabaseKey!},
+      headers: {
+        'apikey': supabaseKey!,
+        'Authorization': 'Bearer $supabaseKey',
+      },
     );
 
-    if (response.statusCode != 200) {
+    print('ID: $itemId - Code: ${response.statusCode}');
+
+    if (response.statusCode != 204) {
       throw Exception('Failed to delete item from the shopping list');
     }
   }
